@@ -1,0 +1,53 @@
+import requests
+from bs4 import BeautifulSoup
+from sumy.parsers.html import HtmlParser
+from sumy.nlp.tokenizers import Tokenizer
+from sumy.summarizers.lsa import LsaSummarizer
+from sumy.summarizers.lex_rank import LexRankSummarizer
+from sumy.summarizers.text_rank import TextRankSummarizer
+from sumy.nlp.stemmers import Stemmer
+from sumy.utils import get_stop_words
+
+
+# Take input URL from user
+url = input("Enter the URL of the article: ")
+
+# Send HTTP request to URL and get response
+response = requests.get(url)
+
+# Use BeautifulSoup to parse HTML content
+soup = BeautifulSoup(response.content, 'html.parser')
+
+# Find article content using HTML tags
+article = soup.find('article')
+
+# Parse article content with sumy's HtmlParser and Tokenizer
+parser = HtmlParser.from_string(str(article), url, Tokenizer('english'))
+
+# Summarize article content using LSA algorithm
+lsa_summarizer = LsaSummarizer(Stemmer('english'))
+lsa_summarizer.stop_words = get_stop_words('english')
+lsa_summary = lsa_summarizer(parser.document, 5)
+
+# Summarize article content using LexRank algorithm
+lexrank_summarizer = LexRankSummarizer()
+lexrank_summarizer.stop_words = get_stop_words('english')
+lexrank_summary = lexrank_summarizer(parser.document, 5)
+
+# Summarize article content using TextRank algorithm
+textrank_summarizer = TextRankSummarizer()
+textrank_summarizer.stop_words = get_stop_words('english')
+textrank_summary = textrank_summarizer(parser.document, 5)
+
+# Print summaries
+print("LSA Summary:")
+for sentence in lsa_summary:
+    print("- " + str(sentence))
+
+print("\nLexRank Summary:")
+for sentence in lexrank_summary:
+    print("- " + str(sentence))
+
+print("\nTextRank Summary:")
+for sentence in textrank_summary:
+    print("- " + str(sentence))
