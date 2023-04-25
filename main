@@ -1,53 +1,85 @@
-import requests
 from bs4 import BeautifulSoup
 from sumy.parsers.html import HtmlParser
 from sumy.nlp.tokenizers import Tokenizer
 from sumy.summarizers.lsa import LsaSummarizer
-from sumy.summarizers.lex_rank import LexRankSummarizer
-from sumy.summarizers.text_rank import TextRankSummarizer
 from sumy.nlp.stemmers import Stemmer
 from sumy.utils import get_stop_words
+import requests
+import tkinter as tk
+from tkinter import font
+import webbrowser
 
 
-# Take input URL from user
-url = input("Enter the URL of the article: ")
+def summarize():
+    # Take input URL from user
+    url = url_entry.get()
 
-# Send HTTP request to URL and get response
-response = requests.get(url)
+    # Send HTTP request to URL and get response
+    response = requests.get(url)
 
-# Use BeautifulSoup to parse HTML content
-soup = BeautifulSoup(response.content, 'html.parser')
+    # Use BeautifulSoup to parse HTML content
+    soup = BeautifulSoup(response.content, 'html.parser')
 
-# Find article content using HTML tags
-article = soup.find('article')
+    # Find article content using HTML tags
+    article = soup.find('article')
 
-# Parse article content with sumy's HtmlParser and Tokenizer
-parser = HtmlParser.from_string(str(article), url, Tokenizer('english'))
+    # Parse article content with sumy's HtmlParser and Tokenizer
+    parser = HtmlParser.from_string(str(article), url, Tokenizer('english'))
 
-# Summarize article content using LSA algorithm
-lsa_summarizer = LsaSummarizer(Stemmer('english'))
-lsa_summarizer.stop_words = get_stop_words('english')
-lsa_summary = lsa_summarizer(parser.document, 5)
+    # Summarize article content using LSA algorithm
+    lsa_summarizer = LsaSummarizer(Stemmer('english'))
+    lsa_summarizer.stop_words = get_stop_words('english')
+    lsa_summary = lsa_summarizer(parser.document, 5)
 
-# Summarize article content using LexRank algorithm
-lexrank_summarizer = LexRankSummarizer()
-lexrank_summarizer.stop_words = get_stop_words('english')
-lexrank_summary = lexrank_summarizer(parser.document, 5)
+    # Clear output text box
+    output.delete("1.0", "end")
 
-# Summarize article content using TextRank algorithm
-textrank_summarizer = TextRankSummarizer()
-textrank_summarizer.stop_words = get_stop_words('english')
-textrank_summary = textrank_summarizer(parser.document, 5)
+    # Get title of the article
+    title = soup.find('title').text
 
-# Print summaries
-print("LSA Summary:")
-for sentence in lsa_summary:
-    print("- " + str(sentence))
+    # Print summary in output text box
+    output.insert("end", f"Summary of {title}:\n", "bold")
+    for sentence in lsa_summary:
+        output.insert("end", "- " + str(sentence) + "\n")
 
-print("\nLexRank Summary:")
-for sentence in lexrank_summary:
-    print("- " + str(sentence))
 
-print("\nTextRank Summary:")
-for sentence in textrank_summary:
-    print("- " + str(sentence))
+def donate():
+    # Open web browser to Venmo account page
+    webbrowser.open("https://venmo.com/justin-kievit")
+
+
+# Create GUI window
+window = tk.Tk()
+window.title("Article Summarizer")
+
+# Set window properties
+window.configure(bg='#A1000E')
+window.geometry('600x500')
+window.resizable(False, False)
+
+# Set font properties
+font_style = font.Font(family='Times New Roman')
+
+# Create URL label and entry
+url_label = tk.Label(window, text="Enter the URL of the article:", bg='#A1000E', fg='white', font=font_style)
+url_label.pack()
+url_entry = tk.Entry(window, font=font_style)
+url_entry.pack()
+
+# Create summarize button
+button = tk.Button(window, text="Summarize", command=summarize, bg='#4B68B8', fg='white', font=font_style)
+button.pack()
+
+# Create donate button
+donate_button = tk.Button(window, text="Donate", command=donate, bg='#4B68B8', fg='white', font=font_style)
+donate_button.pack()
+
+# Create output text box
+output = tk.Text(window, bg='white', font=font_style)
+output.pack()
+
+# Add tag for bold text
+output.tag_configure("bold", font=font.Font(family='Times New Roman', weight='bold'))
+
+# Run GUI window
+window.mainloop()
